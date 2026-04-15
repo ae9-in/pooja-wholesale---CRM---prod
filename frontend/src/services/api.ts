@@ -1,12 +1,12 @@
 import axios from "axios";
 import { authStore } from "../store/auth-store";
 
-// Use relative URL in production, environment variable in development
-const baseURL = import.meta.env.VITE_API_BASE_URL || 
-  (import.meta.env.PROD ? "/api/v1" : "http://localhost:5001/api/v1");
+// For separate deployment: use VITE_API_URL environment variable
+// For local development: use localhost
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
 
 export const api = axios.create({
-  baseURL,
+  baseURL: `${API_BASE_URL}/api/v1`,
 });
 
 api.interceptors.request.use((config) => {
