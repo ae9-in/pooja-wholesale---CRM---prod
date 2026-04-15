@@ -1,0 +1,32 @@
+# Development files
+node_modules
+.env
+.env.local
+
+# Backend source (we only need dist)
+backend/src
+backend/tests
+backend/uploads
+
+# Frontend source (we only need dist)
+frontend/src
+frontend/public
+
+# Build artifacts
+*.log
+npm-debug.log*
+.DS_Store
+
+# Git
+.git
+.gitignore
+
+# Documentation
+docs
+*.md
+!README.md
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore

@@ -1,6 +1,11 @@
 // Vercel serverless function entry point
 import { createApp } from '../backend/dist/app.js';
 
-const app = createApp();
+let app;
 
-export default app;
+export default async function handler(req, res) {
+  if (!app) {
+    app = createApp();
+  }
+  return app(req, res);
+}
