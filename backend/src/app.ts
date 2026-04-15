@@ -54,8 +54,14 @@ export function createApp() {
 
   // Serve frontend static files in production
   if (env.NODE_ENV === "production") {
-    const frontendPath = path.resolve(__dirname, "../../frontend/dist");
-    app.use(express.static(frontendPath));
+    // In Vercel, the frontend dist is copied to the backend dist folder
+    const frontendPath = path.resolve(__dirname, "../frontend/dist");
+    
+    // Serve static files with proper caching
+    app.use(express.static(frontendPath, {
+      maxAge: '1d',
+      etag: true,
+    }));
     
     // Handle client-side routing - serve index.html for all non-API routes
     app.get("*", (_req, res) => {
