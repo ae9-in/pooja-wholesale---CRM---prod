@@ -5,10 +5,9 @@
   "type": "module",
   "scripts": {
     "install:all": "npm install && npm install --prefix backend && npm install --prefix frontend",
-    "build": "npm run build:backend && npm run build:frontend && npm run copy:frontend",
+    "build": "npm run build:backend && npm run build:frontend",
     "build:backend": "cd backend && npm install && npm run prisma:generate && npm run build",
     "build:frontend": "cd frontend && npm install && npm run build",
-    "copy:frontend": "node -e \"const fs=require('fs');const path=require('path');const src='frontend/dist';const dest='backend/dist/frontend/dist';fs.mkdirSync(path.dirname(dest),{recursive:true});fs.cpSync(src,dest,{recursive:true});\"",
     "start": "node backend/dist/server.js",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "npm run dev --prefix backend",
