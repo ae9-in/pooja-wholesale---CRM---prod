@@ -16,7 +16,11 @@
   },
   "include": [
     "src/**/*.ts",
-    "prisma/**/*.ts",
-    "tests/**/*.ts"
+    "prisma/**/*.ts"
+  ],
+  "exclude": [
+    "tests",
+    "node_modules",
+    "dist"
   ]
 }

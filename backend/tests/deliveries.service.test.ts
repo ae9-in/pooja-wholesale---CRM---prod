@@ -8,10 +8,10 @@ describe("delivery calculations", () => {
   it("calculates item subtotal", () => {
     expect(
       calculateItemSubtotal({
-        productGroup: "POOJA",
+        productGroup: "RAW_AGARBATTI",
         productType: "ROSE",
         quantity: 10,
-        packingSize: "Plastic Covers - 1kg",
+        packingSize: "1kg",
         packingQuantity: 1,
         quotedPrice: 20,
       }),
@@ -22,18 +22,18 @@ describe("delivery calculations", () => {
     expect(
       calculateDeliveryTotal([
         {
-          productGroup: "POOJA",
+          productGroup: "RAW_AGARBATTI",
           productType: "ROSE",
           quantity: 10,
-          packingSize: "Plastic Covers - 1kg",
+          packingSize: "1kg",
           packingQuantity: 1,
           quotedPrice: 20,
         },
         {
-          productGroup: "POOJA",
+          productGroup: "RAW_AGARBATTI",
           productType: "SANDALWOOD",
           quantity: 5,
-          packingSize: "Bottle - 100gm",
+          packingSize: "100gm",
           packingQuantity: 1,
           quotedPrice: 15,
         },
