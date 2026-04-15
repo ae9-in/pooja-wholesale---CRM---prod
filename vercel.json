@@ -2,15 +2,8 @@
   "version": 2,
   "builds": [
     {
-      "src": "backend/package.json",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": [
-          "backend/dist/**",
-          "backend/prisma/**",
-          "frontend/dist/**"
-        ]
-      }
+      "src": "backend/dist/server.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
@@ -30,8 +23,5 @@
       "src": "/(.*)",
       "dest": "backend/dist/server.js"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }
