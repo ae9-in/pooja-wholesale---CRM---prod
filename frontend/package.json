@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "axios": "^1.8.4",
@@ -28,7 +30,5 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@types/react": "^19.0.2",
-    "@types/react-dom": "^19.0.2"
   }
 }
