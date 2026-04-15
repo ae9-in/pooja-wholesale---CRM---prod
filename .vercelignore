@@ -3,14 +3,8 @@ node_modules
 .env
 .env.local
 
-# Backend source (we only need dist)
-backend/src
-backend/tests
+# Backend uploads (not needed for deployment)
 backend/uploads
-
-# Frontend source (we only need dist)
-frontend/src
-frontend/public
 
 # Build artifacts
 *.log
@@ -19,14 +13,11 @@ npm-debug.log*
 
 # Git
 .git
-.gitignore
 
 # Documentation
 docs
-*.md
-!README.md
 
-# Docker
+# Docker (not needed for Vercel)
 Dockerfile
 docker-compose.yml
 .dockerignore
