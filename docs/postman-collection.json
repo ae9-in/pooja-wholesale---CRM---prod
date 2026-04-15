@@ -1,0 +1,75 @@
+{
+  "info": {
+    "name": "Wholesale Business Management API",
+    "_postman_id": "f6d52d0d-b472-4b85-8a4f-b49c7d75c001",
+    "description": "API collection for the wholesale CRM and delivery management platform.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"superadmin@wholesale.local\",\n  \"password\": \"Password123!\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Create Delivery",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/deliveries",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "deliveries"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerId\": \"CUSTOMER_ID\",\n  \"quoteDate\": \"2026-04-10\",\n  \"quotedDeliveryDate\": \"2026-04-10\",\n  \"deliveryStatus\": \"QUOTED\",\n  \"assignedStaffId\": \"STAFF_ID\",\n  \"notes\": \"Initial quote shared\",\n  \"items\": [\n    {\n      \"productGroup\": \"DHOOP\",\n      \"productType\": \"ROSE\",\n      \"quantity\": 100,\n      \"packingSize\": \"50 sticks\",\n      \"packingQuantity\": 2,\n      \"quotedPrice\": 120,\n      \"notes\": \"Rose premium\"\n    }\n  ]\n}"
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api/v1"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ]
+}

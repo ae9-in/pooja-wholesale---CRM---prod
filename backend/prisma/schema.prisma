@@ -1,0 +1,233 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  STAFF
+}
+
+enum CustomerStatus {
+  NEW
+  CONTACTED
+  QUOTED
+  DELIVERY_PENDING
+  DELIVERED
+  REVISIT_REQUIRED
+  FOLLOW_UP_REQUIRED
+  INACTIVE
+}
+
+enum CustomerPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum DeliveryStatus {
+  QUOTED
+  CONFIRMED
+  DISPATCHED
+  DELIVERED
+  CANCELLED
+}
+
+enum ReminderStatus {
+  PENDING
+  UPCOMING
+  DONE
+  OVERDUE
+  SNOOZED
+  CANCELLED
+}
+
+enum ReminderType {
+  WHOLESALE_REVISIT_15_DAY
+}
+
+enum ProductGroup {
+  DHOOP
+  RAW_AGARBATTI
+  CAMPHOR
+  COTTON_WICKS
+  HARSHNA_KUNKUM
+  OIL
+}
+
+enum ProductType {
+  ROSE
+  SANDALWOOD
+  LAVENDER
+  THREE_IN_ONE
+  STANDARD
+}
+
+enum NoteType {
+  GENERAL
+  DELIVERY
+  REVISIT
+  FOLLOW_UP
+}
+
+enum ActivityEntityType {
+  USER
+  CUSTOMER
+  DELIVERY
+  REMINDER
+  NOTE
+  AUTH
+}
+
+model User {
+  id                 String        @id @default(auto()) @map("_id") @db.ObjectId
+  fullName           String
+  email              String        @unique
+  passwordHash       String
+  role               Role
+  phone              String?
+  isActive           Boolean       @default(true)
+  assignedCustomers  Customer[]    @relation("CustomerAssignedStaff")
+  createdCustomers   Customer[]    @relation("CustomerCreatedBy")
+  assignedDeliveries Delivery[]    @relation("DeliveryAssignedStaff")
+  createdDeliveries  Delivery[]    @relation("DeliveryCreatedBy")
+  assignedReminders  Reminder[]    @relation("ReminderAssignedStaff")
+  authoredNotes      Note[]
+  activityLogs       ActivityLog[]
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+}
+
+model Customer {
+  id             String           @id @default(auto()) @map("_id") @db.ObjectId
+  businessName   String
+  ownerName      String
+  phoneNumber1   String
+  phoneNumber2   String?
+  email          String?
+  addressLine1   String
+  addressLine2   String?
+  area           String
+  city           String
+  state          String
+  pincode        String
+  description    String?
+  businessType   String
+  status         CustomerStatus   @default(NEW)
+  priority       CustomerPriority @default(MEDIUM)
+  source         String?
+  assignedStaffId String?          @db.ObjectId
+  createdById    String           @db.ObjectId
+  isArchived     Boolean          @default(false)
+  assignedStaff  User?            @relation("CustomerAssignedStaff", fields: [assignedStaffId], references: [id])
+  createdBy      User             @relation("CustomerCreatedBy", fields: [createdById], references: [id])
+  deliveries     Delivery[]
+  reminders      Reminder[]
+  notes          Note[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([assignedStaffId])
+  @@index([status])
+  @@index([city])
+}
+
+model Delivery {
+  id                 String         @id @default(auto()) @map("_id") @db.ObjectId
+  customerId         String         @db.ObjectId
+  quoteDate          DateTime
+  quotedDeliveryDate DateTime
+  deliveryStatus     DeliveryStatus @default(QUOTED)
+  totalQuotedValue   Float
+  notes              String?
+  assignedStaffId    String?        @db.ObjectId
+  billFileUrl        String?
+  billFileName       String?
+  billMimeType       String?
+  createdById        String         @db.ObjectId
+  customer           Customer       @relation(fields: [customerId], references: [id])
+  assignedStaff      User?          @relation("DeliveryAssignedStaff", fields: [assignedStaffId], references: [id])
+  createdBy          User           @relation("DeliveryCreatedBy", fields: [createdById], references: [id])
+  items              DeliveryItem[]
+  reminders          Reminder[]
+  notesList          Note[]
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  @@index([customerId])
+  @@index([quotedDeliveryDate])
+  @@index([deliveryStatus])
+}
+
+model DeliveryItem {
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  deliveryId      String         @db.ObjectId
+  productGroup    ProductGroup
+  productType     ProductType?
+  quantity        Int
+  packingSize     String
+  packingQuantity Int
+  quotedPrice     Float
+  subtotal        Float
+  notes           String?
+  delivery        Delivery       @relation(fields: [deliveryId], references: [id])
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model Reminder {
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  customerId      String         @db.ObjectId
+  deliveryId      String?        @db.ObjectId
+  reminderType    ReminderType
+  reminderDate    DateTime
+  status          ReminderStatus @default(PENDING)
+  title           String
+  description     String?
+  assignedStaffId String?        @db.ObjectId
+  completedAt     DateTime?
+  snoozedUntil    DateTime?
+  completionNote  String?
+  createdBySystem Boolean        @default(false)
+  customer        Customer       @relation(fields: [customerId], references: [id])
+  delivery        Delivery?      @relation(fields: [deliveryId], references: [id])
+  assignedStaff   User?          @relation("ReminderAssignedStaff", fields: [assignedStaffId], references: [id])
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([status])
+  @@index([reminderDate])
+}
+
+model Note {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  customerId String   @db.ObjectId
+  deliveryId String?  @db.ObjectId
+  authorId   String   @db.ObjectId
+  content    String
+  noteType   NoteType @default(GENERAL)
+  customer   Customer @relation(fields: [customerId], references: [id])
+  delivery   Delivery? @relation(fields: [deliveryId], references: [id])
+  author     User     @relation(fields: [authorId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model ActivityLog {
+  id         String             @id @default(auto()) @map("_id") @db.ObjectId
+  entityType ActivityEntityType
+  entityId   String
+  action     String
+  message    String
+  actorId    String?            @db.ObjectId
+  metadata   Json?
+  actor      User?              @relation(fields: [actorId], references: [id])
+  createdAt  DateTime           @default(now())
+
+  @@index([entityType, entityId])
+}

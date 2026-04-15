@@ -1,0 +1,51 @@
+# Dependencies
+node_modules
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# Build outputs
+dist
+build
+.turbo
+.vite
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.development
+
+# Database
+backend/prisma/dev.db
+backend/prisma/dev.db-journal
+
+# Uploads
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs
+*.log.*
+
+# Testing
+coverage
+.nyc_output
+
+# Misc
+.cache
+.temp
+tmp
