@@ -1,4 +1,3 @@
-import { DeliveryStatus, ProductType, Prisma, ProductGroup, ReminderType } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../utils/app-error.js";
@@ -8,10 +7,23 @@ import { syncRevisitReminderForDelivery } from "../reminders/reminders.service.j
 import { removeUploadedFile } from "../uploads/upload.service.js";
 import { productPackagingPresets } from "./delivery.constants.js";
 
+type DeliveryStatusValue = "QUOTED" | "CONFIRMED" | "DISPATCHED" | "DELIVERED" | "CANCELLED";
+type ProductGroupValue = "DHOOP" | "RAW_AGARBATTI" | "CAMPHOR" | "COTTON_WICKS" | "HARSHNA_KUNKUM" | "OIL";
+type ProductTypeValue = "ROSE" | "SANDALWOOD" | "LAVENDER" | "THREE_IN_ONE" | "STANDARD";
+type ReminderTypeValue = "WHOLESALE_REVISIT_15_DAY";
+type DeliveryItemRow = {
+  productGroup: ProductGroupValue;
+  productType: ProductTypeValue | null;
+  quantity: number;
+  packingSize: string;
+  packingQuantity: number;
+  quotedPrice: number | string;
+};
+
 export type DeliveryItemInput = {
   id?: string;
-  productGroup: ProductGroup;
-  productType?: ProductType | null;
+  productGroup: ProductGroupValue;
+  productType?: ProductTypeValue | null;
   quantity: number;
   packingSize: string;
   packingQuantity: number;
@@ -24,7 +36,7 @@ export type DeliveryCreateInput = {
   customerId: string;
   quoteDate: string | Date;
   quotedDeliveryDate: string | Date;
-  deliveryStatus: DeliveryStatus;
+  deliveryStatus: DeliveryStatusValue;
   notes?: string;
   assignedStaffId?: string | null;
   items: DeliveryItemInput[];
@@ -58,15 +70,15 @@ function assertVariantAllowed(item: DeliveryItemInput) {
   }
 }
 
-function buildWhere(query: Record<string, string>, user?: Express.UserPayload): Prisma.DeliveryWhereInput {
-  const and: Prisma.DeliveryWhereInput[] = [];
+function buildWhere(query: Record<string, string>, user?: Express.UserPayload) {
+  const and: Array<Record<string, unknown>> = [];
 
   if (user?.role === "STAFF") {
     and.push({ assignedStaffId: user.id });
   }
 
   if (query.customerId) and.push({ customerId: query.customerId });
-  if (query.deliveryStatus) and.push({ deliveryStatus: query.deliveryStatus as DeliveryStatus });
+  if (query.deliveryStatus) and.push({ deliveryStatus: query.deliveryStatus as DeliveryStatusValue });
   if (query.assignedStaffId) and.push({ assignedStaffId: query.assignedStaffId });
   if (query.quotedDateFrom || query.quotedDateTo) {
     and.push({
@@ -130,7 +142,7 @@ export const deliveriesService = {
     });
     const totalQuotedValue = calculateDeliveryTotal(input.items);
 
-    const delivery = await prisma.$transaction(async (tx) => {
+    const delivery = await prisma.$transaction(async (tx: any) => {
       const created = await tx.delivery.create({
         data: {
           customerId: input.customerId,
@@ -221,7 +233,7 @@ export const deliveriesService = {
       customerId: string;
       quoteDate: string | Date;
       quotedDeliveryDate: string | Date;
-      deliveryStatus: DeliveryStatus;
+      deliveryStatus: DeliveryStatusValue;
       notes?: string;
       assignedStaffId?: string | null;
       items: DeliveryItemInput[];
@@ -242,7 +254,7 @@ export const deliveriesService = {
       throw new AppError("Delivery not found", StatusCodes.NOT_FOUND);
     }
 
-    const items = input.items ?? existing.items.map((item) => ({
+    const items = input.items ?? existing.items.map((item: any) => ({
       id: item.id,
       productGroup: item.productGroup,
       productType: item.productType,
@@ -255,7 +267,7 @@ export const deliveriesService = {
     }));
     const totalQuotedValue = calculateDeliveryTotal(items);
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       await tx.delivery.update({
         where: { id },
         data: {
@@ -300,7 +312,7 @@ export const deliveriesService = {
       action: "UPDATED",
       message: `Delivery ${id} updated`,
       actorId,
-      metadata: { reminderType: ReminderType.WHOLESALE_REVISIT_15_DAY },
+      metadata: { reminderType: "WHOLESALE_REVISIT_15_DAY" as ReminderTypeValue },
     });
 
     return this.getById(id);
@@ -339,7 +351,7 @@ export const deliveriesService = {
       where: { id: deliveryId },
       data: {
         totalQuotedValue: calculateDeliveryTotal(
-          items.map((row) => ({
+          items.map((row: DeliveryItemRow) => ({
             productGroup: row.productGroup,
             quantity: row.quantity,
             packingSize: row.packingSize,
@@ -387,7 +399,7 @@ export const deliveriesService = {
       where: { id: deliveryId },
       data: {
         totalQuotedValue: calculateDeliveryTotal(
-          delivery.items.map((row) => ({
+          delivery.items.map((row: DeliveryItemRow) => ({
             productGroup: row.productGroup,
             quantity: row.quantity,
             packingSize: row.packingSize,
@@ -417,7 +429,7 @@ export const deliveriesService = {
       where: { id: deliveryId },
       data: {
         totalQuotedValue: calculateDeliveryTotal(
-          remainingItems.map((row) => ({
+          remainingItems.map((row: DeliveryItemRow) => ({
             productGroup: row.productGroup,
             quantity: row.quantity,
             packingSize: row.packingSize,
