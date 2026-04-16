@@ -1,24 +1,39 @@
-import {
-  DeliveryStatus,
-  Prisma,
-  ReminderStatus,
-  ReminderType,
-  PrismaClient,
-} from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { addDays, isAfter, isBefore, startOfDay } from "date-fns";
 import { prisma } from "../../lib/prisma.js";
 
 export const UPCOMING_WINDOW_DAYS = 3;
 
+type DeliveryStatusValue = "QUOTED" | "CONFIRMED" | "DISPATCHED" | "DELIVERED" | "CANCELLED";
+type ReminderStatusValue = "PENDING" | "UPCOMING" | "DONE" | "OVERDUE" | "SNOOZED" | "CANCELLED";
+type ReminderTypeValue = "WHOLESALE_REVISIT_15_DAY";
+
+const DELIVERY_STATUS = {
+  CANCELLED: "CANCELLED",
+} as const;
+
+const REMINDER_STATUS = {
+  PENDING: "PENDING",
+  UPCOMING: "UPCOMING",
+  DONE: "DONE",
+  OVERDUE: "OVERDUE",
+  SNOOZED: "SNOOZED",
+  CANCELLED: "CANCELLED",
+} as const;
+
+const REMINDER_TYPE = {
+  WHOLESALE_REVISIT_15_DAY: "WHOLESALE_REVISIT_15_DAY",
+} as const;
+
 export function calculateRevisitDate(quotedDeliveryDate: Date) {
   return addDays(startOfDay(quotedDeliveryDate), 15);
 }
 
-export function deriveReminderStatus(reminderDate: Date, currentStatus?: ReminderStatus) {
+export function deriveReminderStatus(reminderDate: Date, currentStatus?: ReminderStatusValue) {
   if (
-    currentStatus === ReminderStatus.DONE ||
-    currentStatus === ReminderStatus.CANCELLED ||
-    currentStatus === ReminderStatus.SNOOZED
+    currentStatus === REMINDER_STATUS.DONE ||
+    currentStatus === REMINDER_STATUS.CANCELLED ||
+    currentStatus === REMINDER_STATUS.SNOOZED
   ) {
     return currentStatus;
   }
@@ -27,14 +42,14 @@ export function deriveReminderStatus(reminderDate: Date, currentStatus?: Reminde
   const reminderDay = startOfDay(reminderDate);
 
   if (isBefore(reminderDay, today)) {
-    return ReminderStatus.OVERDUE;
+    return REMINDER_STATUS.OVERDUE;
   }
 
   if (!isAfter(reminderDay, addDays(today, UPCOMING_WINDOW_DAYS))) {
-    return ReminderStatus.UPCOMING;
+    return REMINDER_STATUS.UPCOMING;
   }
 
-  return ReminderStatus.PENDING;
+  return REMINDER_STATUS.PENDING;
 }
 
 export async function syncRevisitReminderForDelivery(
@@ -43,7 +58,7 @@ export async function syncRevisitReminderForDelivery(
     customerId: string;
     quotedDeliveryDate: Date;
     assignedStaffId: string | null;
-    deliveryStatus: DeliveryStatus;
+    deliveryStatus: DeliveryStatusValue;
     customer?: { businessName: string };
   },
   prismaClient: PrismaClient | Prisma.TransactionClient = prisma,
@@ -51,14 +66,14 @@ export async function syncRevisitReminderForDelivery(
   const reminderDate = calculateRevisitDate(delivery.quotedDeliveryDate);
   const title = `15-day revisit for ${delivery.customer?.businessName ?? "customer"}`;
   const status =
-    delivery.deliveryStatus === DeliveryStatus.CANCELLED
-      ? ReminderStatus.CANCELLED
+    delivery.deliveryStatus === DELIVERY_STATUS.CANCELLED
+      ? REMINDER_STATUS.CANCELLED
       : deriveReminderStatus(reminderDate);
 
   const existingReminder = await prismaClient.reminder.findFirst({
     where: {
       deliveryId: delivery.id,
-      reminderType: ReminderType.WHOLESALE_REVISIT_15_DAY,
+      reminderType: REMINDER_TYPE.WHOLESALE_REVISIT_15_DAY,
     },
   });
 
@@ -79,7 +94,7 @@ export async function syncRevisitReminderForDelivery(
     data: {
       customerId: delivery.customerId,
       deliveryId: delivery.id,
-      reminderType: ReminderType.WHOLESALE_REVISIT_15_DAY,
+      reminderType: REMINDER_TYPE.WHOLESALE_REVISIT_15_DAY as ReminderTypeValue,
       reminderDate,
       status,
       title,
@@ -94,7 +109,7 @@ export async function updateReminderStatuses(prismaClient: PrismaClient = prisma
   const reminders = await prismaClient.reminder.findMany({
     where: {
       status: {
-        in: [ReminderStatus.PENDING, ReminderStatus.UPCOMING, ReminderStatus.OVERDUE],
+        in: [REMINDER_STATUS.PENDING, REMINDER_STATUS.UPCOMING, REMINDER_STATUS.OVERDUE],
       },
     },
   });
@@ -116,7 +131,7 @@ export async function repairMissingRevisitReminders(
     include: {
       customer: true,
       reminders: {
-        where: { reminderType: ReminderType.WHOLESALE_REVISIT_15_DAY },
+        where: { reminderType: REMINDER_TYPE.WHOLESALE_REVISIT_15_DAY },
       },
     },
   });
@@ -138,7 +153,7 @@ export async function markReminderDone(
   return prismaClient.reminder.update({
     where: { id: reminderId },
     data: {
-      status: ReminderStatus.DONE,
+      status: REMINDER_STATUS.DONE,
       completedAt: new Date(),
       completionNote,
     },
@@ -153,7 +168,7 @@ export async function snoozeReminder(
   return prismaClient.reminder.update({
     where: { id: reminderId },
     data: {
-      status: ReminderStatus.SNOOZED,
+      status: REMINDER_STATUS.SNOOZED,
       snoozedUntil,
     },
   });
@@ -181,7 +196,7 @@ export async function cancelReminder(
   return prismaClient.reminder.update({
     where: { id: reminderId },
     data: {
-      status: ReminderStatus.CANCELLED,
+      status: REMINDER_STATUS.CANCELLED,
     },
   });
 }

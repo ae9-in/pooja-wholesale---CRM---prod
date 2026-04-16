@@ -1,9 +1,18 @@
-import { Prisma } from "@prisma/client";
 import { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { ZodError } from "zod";
 import { logger } from "../lib/logger.js";
 import { AppError } from "../utils/app-error.js";
+
+function isPrismaKnownRequestError(error: unknown): error is Error & { code: string; meta?: unknown } {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof (error as { code?: unknown }).code === "string" &&
+    error.constructor?.name === "PrismaClientKnownRequestError"
+  );
+}
 
 export function errorHandler(
   error: Error,
@@ -20,7 +29,7 @@ export function errorHandler(
     });
   }
 
-  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+  if (isPrismaKnownRequestError(error)) {
     return res.status(StatusCodes.BAD_REQUEST).json({
       message: "Database request failed",
       code: error.code,

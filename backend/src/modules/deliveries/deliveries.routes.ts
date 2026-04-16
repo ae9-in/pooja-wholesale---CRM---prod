@@ -1,4 +1,3 @@
-import { Role } from "@prisma/client";
 import { Router } from "express";
 import { authenticate, authorize } from "../../middleware/auth.middleware.js";
 import { validate } from "../../middleware/validate.middleware.js";
@@ -19,24 +18,24 @@ deliveryRouter.use(authenticate);
 deliveryRouter.get("/", asyncHandler(deliveriesController.list));
 deliveryRouter.post(
   "/",
-  authorize(Role.SUPER_ADMIN, Role.ADMIN, Role.STAFF),
+  authorize("SUPER_ADMIN", "ADMIN", "STAFF"),
   validate(deliveryCreateSchema),
   asyncHandler(deliveriesController.create),
 );
 deliveryRouter.post(
   "/bulk",
-  authorize(Role.SUPER_ADMIN, Role.ADMIN, Role.STAFF),
+  authorize("SUPER_ADMIN", "ADMIN", "STAFF"),
   validate(deliveryBulkCreateSchema),
   asyncHandler(deliveriesController.createBulk),
 );
 deliveryRouter.get("/:id", asyncHandler(deliveriesController.getById));
 deliveryRouter.patch(
   "/:id",
-  authorize(Role.SUPER_ADMIN, Role.ADMIN, Role.STAFF),
+  authorize("SUPER_ADMIN", "ADMIN", "STAFF"),
   validate(deliveryUpdateSchema),
   asyncHandler(deliveriesController.update),
 );
-deliveryRouter.delete("/:id", authorize(Role.SUPER_ADMIN, Role.ADMIN), asyncHandler(deliveriesController.remove));
+deliveryRouter.delete("/:id", authorize("SUPER_ADMIN", "ADMIN"), asyncHandler(deliveriesController.remove));
 deliveryRouter.post("/:id/items", validate(deliveryItemCreateSchema), asyncHandler(deliveriesController.addItem));
 deliveryRouter.patch(
   "/:id/items/:itemId",

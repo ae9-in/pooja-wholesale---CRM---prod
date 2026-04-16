@@ -1,16 +1,18 @@
-import { ReminderStatus, ReminderType } from "@prisma/client";
 import { z } from "zod";
+
+const reminderStatusSchema = z.enum(["PENDING", "UPCOMING", "DONE", "OVERDUE", "SNOOZED", "CANCELLED"]);
+const reminderTypeSchema = z.enum(["WHOLESALE_REVISIT_15_DAY"]);
 
 export const reminderCreateSchema = z.object({
   body: z.object({
     customerId: z.string(),
     deliveryId: z.string().optional(),
-    reminderType: z.nativeEnum(ReminderType),
+    reminderType: reminderTypeSchema,
     reminderDate: z.string().or(z.date()),
     title: z.string().min(2),
     description: z.string().optional(),
     assignedStaffId: z.string().optional().nullable(),
-    status: z.nativeEnum(ReminderStatus).optional(),
+    status: reminderStatusSchema.optional(),
   }),
 });
 
@@ -19,7 +21,7 @@ export const reminderUpdateSchema = z.object({
     title: z.string().min(2).optional(),
     description: z.string().optional(),
     assignedStaffId: z.string().optional().nullable(),
-    status: z.nativeEnum(ReminderStatus).optional(),
+    status: reminderStatusSchema.optional(),
   }),
 });
 

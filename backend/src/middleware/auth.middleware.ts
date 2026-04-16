@@ -1,8 +1,9 @@
 import { NextFunction, Request, Response } from "express";
-import { Role } from "@prisma/client";
 import { env } from "../config/env.js";
 import { prisma } from "../lib/prisma.js";
 import { AppError } from "../utils/app-error.js";
+
+type RoleValue = "SUPER_ADMIN" | "ADMIN" | "STAFF";
 
 async function resolveActingUser() {
   const preferredUser = await prisma.user.findFirst({
@@ -61,7 +62,7 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
   }
 }
 
-export function authorize(..._roles: Role[]) {
+export function authorize(..._roles: RoleValue[]) {
   return (req: Request, _res: Response, next: NextFunction) => {
     if (!req.user) {
       return next(new AppError("No acting user is available for this request.", 500));

@@ -1,4 +1,3 @@
-import { Role } from "@prisma/client";
 import { Router } from "express";
 import { authenticate, authorize } from "../../middleware/auth.middleware.js";
 import { validate } from "../../middleware/validate.middleware.js";
@@ -9,7 +8,7 @@ import { userCreateSchema, userUpdateSchema } from "./users.validation.js";
 export const userRouter = Router();
 
 userRouter.use(authenticate);
-userRouter.use(authorize(Role.SUPER_ADMIN));
+userRouter.use(authorize("SUPER_ADMIN"));
 
 userRouter.get("/", asyncHandler(usersController.list));
 userRouter.post("/", validate(userCreateSchema), asyncHandler(usersController.create));

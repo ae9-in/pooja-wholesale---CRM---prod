@@ -1,11 +1,11 @@
-import { Role } from "@prisma/client";
-
 declare global {
   namespace Express {
+    type RoleValue = "SUPER_ADMIN" | "ADMIN" | "STAFF";
+
     interface UserPayload {
       id: string;
       email: string;
-      role: Role;
+      role: RoleValue;
     }
 
     interface Request {
