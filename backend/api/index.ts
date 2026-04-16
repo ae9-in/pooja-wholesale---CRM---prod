@@ -1,11 +1,11 @@
 import type { Express } from "express";
 
 let appPromise: Promise<Express> | null = null;
-const builtAppUrl = new URL("../dist/src/app.js", import.meta.url).href;
+const sourceAppUrl = new URL("../src/app.ts", import.meta.url).href;
 
 async function getApp() {
   if (!appPromise) {
-    appPromise = import(builtAppUrl).then(({ createApp }) => createApp());
+    appPromise = import(sourceAppUrl).then(({ createApp }) => createApp());
   }
 
   return appPromise;
