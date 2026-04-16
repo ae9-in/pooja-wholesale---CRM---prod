@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "npm run prisma:generate && tsc -p tsconfig.json",
-    "start": "node dist/server.js",
+    "build": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\" && npm run prisma:generate && tsc -p tsconfig.json",
+    "start": "node dist/src/server.js",
     "test": "vitest run",
     "prisma:generate": "npx prisma generate",
     "prisma:push": "prisma db push",
