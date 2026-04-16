@@ -4,7 +4,7 @@ let appPromise: Promise<Express> | null = null;
 
 async function getApp() {
   if (!appPromise) {
-    appPromise = import("../src/app.js").then(({ createApp }) => createApp());
+    appPromise = import("../dist/src/app.js").then(({ createApp }) => createApp());
   }
 
   return appPromise;
