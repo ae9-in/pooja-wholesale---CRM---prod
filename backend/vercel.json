@@ -2,8 +2,7 @@
   "version": 2,
   "functions": {
     "api/server.ts": {
-      "maxDuration": 30,
-      "includeFiles": "{src/generated/prisma/**,prisma/schema.prisma}"
+      "maxDuration": 30
     }
   },
   "crons": [
