@@ -1,4 +1,3 @@
-import { Prisma, PrismaClient } from "@prisma/client";
 import { addDays, isAfter, isBefore, startOfDay } from "date-fns";
 import { prisma } from "../../lib/prisma.js";
 
@@ -12,6 +11,8 @@ type ReminderRecord = {
   reminderDate: Date;
   status: ReminderStatusValue;
 };
+type ReminderClient = Pick<typeof prisma, "reminder">;
+type DeliveryAndReminderClient = Pick<typeof prisma, "delivery" | "reminder">;
 type DeliveryWithRevisitState = {
   id: string;
   customerId: string;
@@ -75,7 +76,7 @@ export async function syncRevisitReminderForDelivery(
     deliveryStatus: DeliveryStatusValue;
     customer?: { businessName: string };
   },
-  prismaClient: PrismaClient | Prisma.TransactionClient = prisma,
+  prismaClient: DeliveryAndReminderClient = prisma,
 ) {
   const reminderDate = calculateRevisitDate(delivery.quotedDeliveryDate);
   const title = `15-day revisit for ${delivery.customer?.businessName ?? "customer"}`;
@@ -119,7 +120,7 @@ export async function syncRevisitReminderForDelivery(
   });
 }
 
-export async function updateReminderStatuses(prismaClient: PrismaClient = prisma) {
+export async function updateReminderStatuses(prismaClient: ReminderClient = prisma) {
   const reminders = await prismaClient.reminder.findMany({
     where: {
       status: {
@@ -139,7 +140,7 @@ export async function updateReminderStatuses(prismaClient: PrismaClient = prisma
 }
 
 export async function repairMissingRevisitReminders(
-  prismaClient: PrismaClient | Prisma.TransactionClient = prisma,
+  prismaClient: DeliveryAndReminderClient = prisma,
 ) {
   const deliveries = await prismaClient.delivery.findMany({
     include: {
@@ -162,7 +163,7 @@ export async function repairMissingRevisitReminders(
 export async function markReminderDone(
   reminderId: string,
   completionNote: string,
-  prismaClient: PrismaClient | Prisma.TransactionClient = prisma,
+  prismaClient: ReminderClient = prisma,
 ) {
   return prismaClient.reminder.update({
     where: { id: reminderId },
@@ -177,7 +178,7 @@ export async function markReminderDone(
 export async function snoozeReminder(
   reminderId: string,
   snoozedUntil: Date,
-  prismaClient: PrismaClient | Prisma.TransactionClient = prisma,
+  prismaClient: ReminderClient = prisma,
 ) {
   return prismaClient.reminder.update({
     where: { id: reminderId },
@@ -191,7 +192,7 @@ export async function snoozeReminder(
 export async function rescheduleReminder(
   reminderId: string,
   reminderDate: Date,
-  prismaClient: PrismaClient | Prisma.TransactionClient = prisma,
+  prismaClient: ReminderClient = prisma,
 ) {
   return prismaClient.reminder.update({
     where: { id: reminderId },
@@ -205,7 +206,7 @@ export async function rescheduleReminder(
 
 export async function cancelReminder(
   reminderId: string,
-  prismaClient: PrismaClient | Prisma.TransactionClient = prisma,
+  prismaClient: ReminderClient = prisma,
 ) {
   return prismaClient.reminder.update({
     where: { id: reminderId },

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\" && npm run prisma:generate && tsc -p tsconfig.json",
+    "build": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\" && npm run prisma:generate && tsc -p tsconfig.json && node -e \"const fs=require('fs');const path=require('path');const src=path.join(process.cwd(),'src','generated','prisma');const dest=path.join(process.cwd(),'dist','src','generated','prisma');if(fs.existsSync(src)){fs.mkdirSync(path.dirname(dest),{recursive:true});fs.cpSync(src,dest,{recursive:true});}\"",
     "start": "node dist/src/server.js",
     "test": "vitest run",
     "prisma:generate": "npx prisma generate",

@@ -20,6 +20,7 @@ build
 # Database
 backend/prisma/dev.db
 backend/prisma/dev.db-journal
+backend/src/generated/
 
 # Uploads
 backend/uploads/*
