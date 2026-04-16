@@ -7,6 +7,20 @@ export const UPCOMING_WINDOW_DAYS = 3;
 type DeliveryStatusValue = "QUOTED" | "CONFIRMED" | "DISPATCHED" | "DELIVERED" | "CANCELLED";
 type ReminderStatusValue = "PENDING" | "UPCOMING" | "DONE" | "OVERDUE" | "SNOOZED" | "CANCELLED";
 type ReminderTypeValue = "WHOLESALE_REVISIT_15_DAY";
+type ReminderRecord = {
+  id: string;
+  reminderDate: Date;
+  status: ReminderStatusValue;
+};
+type DeliveryWithRevisitState = {
+  id: string;
+  customerId: string;
+  quotedDeliveryDate: Date;
+  assignedStaffId: string | null;
+  deliveryStatus: DeliveryStatusValue;
+  customer?: { businessName: string } | null;
+  reminders: Array<{ id: string }>;
+};
 
 const DELIVERY_STATUS = {
   CANCELLED: "CANCELLED",
@@ -115,7 +129,7 @@ export async function updateReminderStatuses(prismaClient: PrismaClient = prisma
   });
 
   await Promise.all(
-    reminders.map((reminder) =>
+    reminders.map((reminder: ReminderRecord) =>
       prismaClient.reminder.update({
         where: { id: reminder.id },
         data: { status: deriveReminderStatus(reminder.reminderDate, reminder.status) },
@@ -136,7 +150,7 @@ export async function repairMissingRevisitReminders(
     },
   });
 
-  const missing = deliveries.filter((delivery) => delivery.reminders.length === 0);
+  const missing = deliveries.filter((delivery: DeliveryWithRevisitState) => delivery.reminders.length === 0);
 
   for (const delivery of missing) {
     await syncRevisitReminderForDelivery(delivery, prismaClient);
