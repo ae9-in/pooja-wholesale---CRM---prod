@@ -8,15 +8,39 @@ import { BarChart, Bar, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 
 export function DashboardPage() {
   const [data, setData] = useState<DashboardSummary | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchDashboard = () => unwrap(api.get<DashboardSummary>("/dashboard/summary")).then(setData);
+    let isMounted = true;
+
+    const fetchDashboard = async () => {
+      try {
+        const summary = await unwrap(api.get<DashboardSummary>("/dashboard/summary"));
+        if (!isMounted) {
+          return;
+        }
+        setData(summary);
+        setError(null);
+      } catch (err) {
+        if (!isMounted) {
+          return;
+        }
+        setError("Dashboard failed to load. Check the backend deployment URL and server logs.");
+      }
+    };
     
     fetchDashboard();
     const interval = setInterval(fetchDashboard, 30000); // Poll every 30 seconds
     
-    return () => clearInterval(interval);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
+
+  if (error) {
+    return <div className="text-sm text-rose-600">{error}</div>;
+  }
 
   if (!data) {
     return <div className="text-sm text-slate-500">Loading dashboard...</div>;

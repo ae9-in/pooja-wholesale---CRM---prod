@@ -1,6 +1,17 @@
-import { DeliveryStatus, ReminderStatus } from "@prisma/client";
 import { endOfMonth, startOfMonth, subMonths } from "date-fns";
 import { prisma } from "../../lib/prisma.js";
+
+const DELIVERY_STATUS = {
+  QUOTED: "QUOTED",
+  CONFIRMED: "CONFIRMED",
+} as const;
+
+const REMINDER_STATUS = {
+  PENDING: "PENDING",
+  UPCOMING: "UPCOMING",
+  OVERDUE: "OVERDUE",
+  DONE: "DONE",
+} as const;
 
 export const dashboardService = {
   async summary() {
@@ -24,15 +35,15 @@ export const dashboardService = {
     ] = await Promise.all([
       prisma.customer.count(),
       prisma.customer.count({ where: { isArchived: false, status: { not: "INACTIVE" } } }),
-      prisma.delivery.count({ where: { deliveryStatus: DeliveryStatus.QUOTED } }),
-      prisma.delivery.count({ where: { deliveryStatus: DeliveryStatus.CONFIRMED } }),
+      prisma.delivery.count({ where: { deliveryStatus: DELIVERY_STATUS.QUOTED } }),
+      prisma.delivery.count({ where: { deliveryStatus: DELIVERY_STATUS.CONFIRMED } }),
       prisma.delivery.count({ where: { createdAt: { gte: monthStart, lte: monthEnd } } }),
-      prisma.reminder.count({ where: { status: ReminderStatus.PENDING } }),
-      prisma.reminder.count({ where: { status: ReminderStatus.UPCOMING } }),
-      prisma.reminder.count({ where: { status: ReminderStatus.OVERDUE } }),
+      prisma.reminder.count({ where: { status: REMINDER_STATUS.PENDING } }),
+      prisma.reminder.count({ where: { status: REMINDER_STATUS.UPCOMING } }),
+      prisma.reminder.count({ where: { status: REMINDER_STATUS.OVERDUE } }),
       prisma.reminder.count({
         where: {
-          status: ReminderStatus.DONE,
+          status: REMINDER_STATUS.DONE,
           completedAt: { gte: monthStart, lte: monthEnd },
         },
       }),
@@ -66,7 +77,7 @@ export const dashboardService = {
           }),
           revisitsDone: await prisma.reminder.count({
             where: {
-              status: ReminderStatus.DONE,
+              status: REMINDER_STATUS.DONE,
               completedAt: {
                 gte: startOfMonth(base),
                 lte: endOfMonth(base),
@@ -98,7 +109,7 @@ export const dashboardService = {
 
   upcomingReminders() {
     return prisma.reminder.findMany({
-      where: { status: { in: [ReminderStatus.UPCOMING, ReminderStatus.PENDING] } },
+      where: { status: { in: [REMINDER_STATUS.UPCOMING, REMINDER_STATUS.PENDING] } },
       take: 10,
       orderBy: { reminderDate: "asc" },
       include: { customer: true, assignedStaff: { select: { id: true, fullName: true } } },
@@ -107,7 +118,7 @@ export const dashboardService = {
 
   overdueReminders() {
     return prisma.reminder.findMany({
-      where: { status: ReminderStatus.OVERDUE },
+      where: { status: REMINDER_STATUS.OVERDUE },
       take: 10,
       orderBy: { reminderDate: "asc" },
       include: { customer: true, assignedStaff: { select: { id: true, fullName: true } } },
