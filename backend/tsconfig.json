@@ -11,11 +11,14 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "types": [
-      "node"
+      "node",
+      "express",
+      "multer"
     ]
   },
   "include": [
     "src/**/*.ts",
+    "src/**/*.d.ts",
     "prisma/**/*.ts"
   ],
   "exclude": [
