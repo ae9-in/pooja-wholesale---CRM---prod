@@ -1,4 +1,3 @@
-import { Prisma, ReminderStatus, ReminderType } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import { createPaginationMeta, getPagination } from "../../utils/pagination.js";
 import { logActivity } from "../activity/activity.service.js";
@@ -10,14 +9,50 @@ import {
   snoozeReminder,
 } from "./reminders.service.js";
 
-function reminderWhere(query: Record<string, string>, user?: Express.UserPayload): Prisma.ReminderWhereInput {
-  const and: Prisma.ReminderWhereInput[] = [];
+type ReminderStatusValue = "PENDING" | "UPCOMING" | "DONE" | "OVERDUE" | "SNOOZED" | "CANCELLED";
+type ReminderTypeValue = "WHOLESALE_REVISIT_15_DAY";
+type ReminderCreateInput = {
+  customerId: string;
+  deliveryId?: string | null;
+  reminderType: ReminderTypeValue;
+  reminderDate: string | Date;
+  title: string;
+  description?: string | null;
+  assignedStaffId?: string | null;
+  status?: ReminderStatusValue;
+  completedAt?: Date | null;
+  snoozedUntil?: Date | null;
+  completionNote?: string | null;
+  createdBySystem?: boolean;
+};
+type ReminderUpdateInput = Partial<{
+  title: string;
+  description: string | null;
+  assignedStaffId: string | null;
+  status: ReminderStatusValue;
+  reminderDate: string | Date;
+  snoozedUntil: Date | null;
+  completedAt: Date | null;
+  completionNote: string | null;
+}>;
+
+const REMINDER_STATUS = {
+  PENDING: "PENDING",
+  UPCOMING: "UPCOMING",
+  DONE: "DONE",
+  OVERDUE: "OVERDUE",
+  SNOOZED: "SNOOZED",
+  CANCELLED: "CANCELLED",
+} as const;
+
+function reminderWhere(query: Record<string, string>, user?: Express.UserPayload) {
+  const and: Array<Record<string, unknown>> = [];
   if (user?.role === "STAFF") {
     and.push({ assignedStaffId: user.id });
   }
-  if (query.status) and.push({ status: query.status as ReminderStatus });
+  if (query.status) and.push({ status: query.status as ReminderStatusValue });
   if (query.assignedStaffId) and.push({ assignedStaffId: query.assignedStaffId });
-  if (query.reminderType) and.push({ reminderType: query.reminderType as ReminderType });
+  if (query.reminderType) and.push({ reminderType: query.reminderType as ReminderTypeValue });
   if (query.dateFrom || query.dateTo) {
     and.push({
       reminderDate: {
@@ -26,9 +61,9 @@ function reminderWhere(query: Record<string, string>, user?: Express.UserPayload
       },
     });
   }
-  if (query.overdueOnly === "true") and.push({ status: ReminderStatus.OVERDUE });
-  if (query.upcomingOnly === "true") and.push({ status: ReminderStatus.UPCOMING });
-  if (query.doneOnly === "true") and.push({ status: ReminderStatus.DONE });
+  if (query.overdueOnly === "true") and.push({ status: REMINDER_STATUS.OVERDUE });
+  if (query.upcomingOnly === "true") and.push({ status: REMINDER_STATUS.UPCOMING });
+  if (query.doneOnly === "true") and.push({ status: REMINDER_STATUS.DONE });
   return and.length ? { AND: and } : {};
 }
 
@@ -52,7 +87,7 @@ export const remindersServiceApi = {
     ]);
 
     return {
-      data: data.map((item) => ({
+      data: data.map((item: any) => ({
         ...item,
         status: deriveReminderStatus(item.snoozedUntil ?? item.reminderDate, item.status),
       })),
@@ -71,7 +106,7 @@ export const remindersServiceApi = {
     });
   },
 
-  async create(input: Prisma.ReminderUncheckedCreateInput, actorId: string) {
+  async create(input: ReminderCreateInput, actorId: string) {
     const reminder = await prisma.reminder.create({
       data: {
         ...input,
@@ -90,7 +125,7 @@ export const remindersServiceApi = {
     return reminder;
   },
 
-  async update(id: string, input: Prisma.ReminderUncheckedUpdateInput, actorId: string) {
+  async update(id: string, input: ReminderUpdateInput, actorId: string) {
     const reminder = await prisma.reminder.update({
       where: { id },
       data: input,

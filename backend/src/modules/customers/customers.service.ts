@@ -1,12 +1,68 @@
-import { CustomerStatus, Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import { createPaginationMeta, getPagination } from "../../utils/pagination.js";
 import { logActivity } from "../activity/activity.service.js";
 import { deliveriesService, type DeliveryCreateInput } from "../deliveries/deliveries.service.js";
 
-function customerWhere(query: Record<string, string>, user?: Express.UserPayload): Prisma.CustomerWhereInput {
+type CustomerStatusValue =
+  | "NEW"
+  | "CONTACTED"
+  | "QUOTED"
+  | "DELIVERY_PENDING"
+  | "DELIVERED"
+  | "REVISIT_REQUIRED"
+  | "FOLLOW_UP_REQUIRED"
+  | "INACTIVE";
+
+type CustomerCreateInput = {
+  businessName: string;
+  ownerName: string;
+  phoneNumber1: string;
+  phoneNumber2?: string | null;
+  email?: string | null;
+  addressLine1: string;
+  addressLine2?: string | null;
+  area: string;
+  city: string;
+  state: string;
+  pincode: string;
+  description?: string | null;
+  businessType: string;
+  status?: CustomerStatusValue;
+  priority?: string;
+  source?: string | null;
+  assignedStaffId?: string | null;
+  createdById: string;
+  initialOrders?: DeliveryCreateInput[];
+};
+
+type CustomerUpdateInput = Partial<{
+  businessName: string;
+  ownerName: string;
+  phoneNumber1: string;
+  phoneNumber2: string | null;
+  email: string | null;
+  addressLine1: string;
+  addressLine2: string | null;
+  area: string;
+  city: string;
+  state: string;
+  pincode: string;
+  description: string | null;
+  businessType: string;
+  status: CustomerStatusValue;
+  priority: string;
+  source: string | null;
+  assignedStaffId: string | null;
+  isArchived: boolean;
+}>;
+
+const CUSTOMER_STATUS = {
+  INACTIVE: "INACTIVE",
+} as const;
+
+function customerWhere(query: Record<string, string>, user?: Express.UserPayload) {
   const search = query.search?.trim();
-  const and: Prisma.CustomerWhereInput[] = [{ isArchived: false }];
+  const and: Array<Record<string, unknown>> = [{ isArchived: false }];
 
   if (user?.role === "STAFF") {
     and.push({ assignedStaffId: user.id });
@@ -25,7 +81,7 @@ function customerWhere(query: Record<string, string>, user?: Express.UserPayload
     });
   }
 
-  if (query.status) and.push({ status: query.status as CustomerStatus });
+  if (query.status) and.push({ status: query.status as CustomerStatusValue });
   if (query.city) and.push({ city: query.city });
   if (query.area) and.push({ area: query.area });
   if (query.assignedStaffId) and.push({ assignedStaffId: query.assignedStaffId });
@@ -66,12 +122,12 @@ export const customersService = {
   },
 
   async create(
-    input: Prisma.CustomerUncheckedCreateInput & { initialOrders?: DeliveryCreateInput[] },
+    input: CustomerCreateInput,
     actorId: string,
   ) {
     const { initialOrders = [], ...customerInput } = input;
     const customer = await prisma.customer.create({
-      data: customerInput,
+      data: customerInput as any,
       include: {
         assignedStaff: { select: { id: true, fullName: true } },
       },
@@ -88,6 +144,7 @@ export const customersService = {
     if (initialOrders.length > 0) {
       await deliveriesService.createMany(
         initialOrders.map((order) => ({
+          ...(order as DeliveryCreateInput),
           ...order,
           customerId: customer.id,
         })),
@@ -144,10 +201,10 @@ export const customersService = {
     return customer;
   },
 
-  async update(id: string, input: Prisma.CustomerUncheckedUpdateInput, actorId: string) {
+  async update(id: string, input: CustomerUpdateInput, actorId: string) {
     const customer = await prisma.customer.update({
       where: { id },
-      data: input,
+      data: input as any,
     });
 
     await logActivity({
@@ -161,7 +218,7 @@ export const customersService = {
     return customer;
   },
 
-  async updateStatus(id: string, status: CustomerStatus, actorId: string) {
+  async updateStatus(id: string, status: CustomerStatusValue, actorId: string) {
     const customer = await prisma.customer.update({
       where: { id },
       data: { status },
@@ -181,7 +238,7 @@ export const customersService = {
   async remove(id: string, actorId: string) {
     const customer = await prisma.customer.update({
       where: { id },
-      data: { isArchived: true, status: CustomerStatus.INACTIVE },
+      data: { isArchived: true, status: CUSTOMER_STATUS.INACTIVE },
     });
 
     await logActivity({
