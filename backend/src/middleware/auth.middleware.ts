@@ -1,27 +1,11 @@
 import { NextFunction, Request, Response } from "express";
-import { env } from "../config/env.js";
 import { prisma } from "../lib/prisma.js";
 import { AppError } from "../utils/app-error.js";
 
 type RoleValue = "SUPER_ADMIN" | "ADMIN" | "STAFF";
+const SYSTEM_OPERATOR_EMAIL = "system@wholesale.local";
 
 async function resolveActingUser() {
-  const preferredUser = await prisma.user.findFirst({
-    where: {
-      email: env.DEFAULT_OPERATOR_EMAIL,
-      isActive: true,
-    },
-    select: {
-      id: true,
-      email: true,
-      role: true,
-    },
-  });
-
-  if (preferredUser) {
-    return preferredUser;
-  }
-
   const existingUser = await prisma.user.findFirst({
     where: { isActive: true },
     orderBy: { createdAt: "asc" },
@@ -39,7 +23,7 @@ async function resolveActingUser() {
   return prisma.user.create({
     data: {
       fullName: "System Operator",
-      email: env.DEFAULT_OPERATOR_EMAIL,
+      email: SYSTEM_OPERATOR_EMAIL,
       passwordHash: "auth-disabled",
       role: "ADMIN",
       isActive: true,

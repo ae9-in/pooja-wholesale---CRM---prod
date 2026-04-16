@@ -3,7 +3,6 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import morgan from "morgan";
-import type { Request } from "express";
 import { env } from "./config/env.js";
 import { errorHandler } from "./middleware/error.middleware.js";
 import { userRouter } from "./modules/users/users.routes.js";
@@ -14,14 +13,6 @@ import { dashboardRouter } from "./modules/dashboard/dashboard.routes.js";
 import { reportsRouter } from "./modules/reports/reports.routes.js";
 import { logger } from "./lib/logger.js";
 import { repairMissingRevisitReminders, updateReminderStatuses } from "./modules/reminders/reminders.service.js";
-
-function hasValidCronSecret(req: Request) {
-  if (!env.CRON_SECRET) {
-    return true;
-  }
-
-  return req.get("authorization") === `Bearer ${env.CRON_SECRET}`;
-}
 
 export function createApp() {
   const app = express();
@@ -59,10 +50,6 @@ export function createApp() {
   });
 
   app.get("/api/internal/jobs/reminders/sync", async (req, res, next) => {
-    if (!hasValidCronSecret(req)) {
-      return res.status(401).json({ ok: false, message: "Unauthorized cron request." });
-    }
-
     try {
       await updateReminderStatuses();
       logger.info("Reminder status sync completed");
@@ -73,10 +60,6 @@ export function createApp() {
   });
 
   app.get("/api/internal/jobs/reminders/repair", async (req, res, next) => {
-    if (!hasValidCronSecret(req)) {
-      return res.status(401).json({ ok: false, message: "Unauthorized cron request." });
-    }
-
     try {
       const repairedCount = await repairMissingRevisitReminders();
       logger.info({ repairedCount }, "Reminder repair completed");
@@ -87,10 +70,6 @@ export function createApp() {
   });
 
   app.get("/api/internal/jobs/reminders/maintenance", async (req, res, next) => {
-    if (!hasValidCronSecret(req)) {
-      return res.status(401).json({ ok: false, message: "Unauthorized cron request." });
-    }
-
     try {
       await updateReminderStatuses();
       const repairedCount = await repairMissingRevisitReminders();
