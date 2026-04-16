@@ -139,7 +139,7 @@ export const dashboardService = {
       _sum: { totalQuotedValue: true },
     });
 
-    return byStatus.map((row) => ({
+    return byStatus.map((row: any) => ({
       status: row.deliveryStatus,
       count: row._count.deliveryStatus,
       totalValue: Number(row._sum.totalQuotedValue ?? 0),

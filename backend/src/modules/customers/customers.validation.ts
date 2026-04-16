@@ -1,5 +1,27 @@
-import { CustomerPriority, CustomerStatus, DeliveryStatus, ProductType, NoteType, ProductGroup } from "@prisma/client";
 import { z } from "zod";
+
+const customerPriorityValues = ["LOW", "MEDIUM", "HIGH"] as const;
+const customerStatusValues = [
+  "NEW",
+  "CONTACTED",
+  "QUOTED",
+  "DELIVERY_PENDING",
+  "DELIVERED",
+  "REVISIT_REQUIRED",
+  "FOLLOW_UP_REQUIRED",
+  "INACTIVE",
+] as const;
+const deliveryStatusValues = ["QUOTED", "CONFIRMED", "DISPATCHED", "DELIVERED", "CANCELLED"] as const;
+const productTypeValues = ["ROSE", "SANDALWOOD", "LAVENDER", "THREE_IN_ONE", "STANDARD"] as const;
+const noteTypeValues = ["GENERAL", "DELIVERY", "REVISIT", "FOLLOW_UP"] as const;
+const productGroupValues = ["DHOOP", "RAW_AGARBATTI", "CAMPHOR", "COTTON_WICKS", "HARSHNA_KUNKUM", "OIL"] as const;
+
+const customerPrioritySchema = z.enum(customerPriorityValues);
+const customerStatusSchemaEnum = z.enum(customerStatusValues);
+const deliveryStatusSchemaEnum = z.enum(deliveryStatusValues);
+const productTypeSchema = z.enum(productTypeValues);
+const noteTypeSchema = z.enum(noteTypeValues);
+const productGroupSchema = z.enum(productGroupValues);
 
 export const customerBodySchema = z.object({
   businessName: z.string().min(2),
@@ -16,14 +38,14 @@ export const customerBodySchema = z.object({
   description: z.string().optional(),
   businessType: z.string().min(2),
   assignedStaffId: z.string().optional().nullable(),
-  status: z.nativeEnum(CustomerStatus).default(CustomerStatus.NEW),
-  priority: z.nativeEnum(CustomerPriority).default(CustomerPriority.MEDIUM),
+  status: customerStatusSchemaEnum.default("NEW"),
+  priority: customerPrioritySchema.default("MEDIUM"),
   source: z.string().optional(),
 });
 
 const initialOrderItemSchema = z.object({
-  productGroup: z.nativeEnum(ProductGroup),
-  productType: z.nativeEnum(ProductType).optional().nullable(),
+  productGroup: productGroupSchema,
+  productType: productTypeSchema.optional().nullable(),
   quantity: z.coerce.number().int().positive(),
   packingSize: z.string().min(1),
   packingQuantity: z.coerce.number().int().positive(),
@@ -34,7 +56,7 @@ const initialOrderItemSchema = z.object({
 const initialOrderSchema = z.object({
   quoteDate: z.string().or(z.date()),
   quotedDeliveryDate: z.string().or(z.date()),
-  deliveryStatus: z.nativeEnum(DeliveryStatus),
+  deliveryStatus: deliveryStatusSchemaEnum,
   notes: z.string().optional(),
   assignedStaffId: z.string().optional().nullable(),
   items: z.array(initialOrderItemSchema).min(1),
@@ -52,7 +74,7 @@ export const customerUpdateSchema = z.object({
 
 export const customerStatusSchema = z.object({
   body: z.object({
-    status: z.nativeEnum(CustomerStatus),
+    status: customerStatusSchemaEnum,
   }),
 });
 
@@ -60,6 +82,6 @@ export const customerNoteSchema = z.object({
   body: z.object({
     content: z.string().min(2),
     deliveryId: z.string().optional(),
-    noteType: z.nativeEnum(NoteType).default(NoteType.GENERAL),
+    noteType: noteTypeSchema.default("GENERAL"),
   }),
 });

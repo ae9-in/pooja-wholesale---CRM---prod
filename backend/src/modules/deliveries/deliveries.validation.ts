@@ -1,12 +1,17 @@
-import { DeliveryStatus, ProductType, ProductGroup } from "@prisma/client";
 import { z } from "zod";
 
-const productTypeSchema = z.nativeEnum(ProductType);
+const deliveryStatusValues = ["QUOTED", "CONFIRMED", "DISPATCHED", "DELIVERED", "CANCELLED"] as const;
+const productTypeValues = ["ROSE", "SANDALWOOD", "LAVENDER", "THREE_IN_ONE", "STANDARD"] as const;
+const productGroupValues = ["DHOOP", "RAW_AGARBATTI", "CAMPHOR", "COTTON_WICKS", "HARSHNA_KUNKUM", "OIL"] as const;
+
+const productTypeSchema = z.enum(productTypeValues);
+const productGroupSchema = z.enum(productGroupValues);
+const deliveryStatusSchema = z.enum(deliveryStatusValues);
 
 export const deliveryItemSchema = z
   .object({
     id: z.string().optional(),
-    productGroup: z.nativeEnum(ProductGroup),
+    productGroup: productGroupSchema,
     productType: productTypeSchema.optional().nullable(),
     quantity: z.coerce.number().int().positive(),
     packingSize: z.string().min(1),
@@ -20,7 +25,7 @@ export const deliveryBodySchema = z.object({
   customerId: z.string().min(1),
   quoteDate: z.string().or(z.date()),
   quotedDeliveryDate: z.string().or(z.date()),
-  deliveryStatus: z.nativeEnum(DeliveryStatus),
+  deliveryStatus: deliveryStatusSchema,
   notes: z.string().optional(),
   assignedStaffId: z.string().optional().nullable(),
   items: z.array(deliveryItemSchema).min(1),
