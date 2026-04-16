@@ -7,12 +7,8 @@
   },
   "crons": [
     {
-      "path": "/api/internal/jobs/reminders/sync",
-      "schedule": "0 * * * *"
-    },
-    {
-      "path": "/api/internal/jobs/reminders/repair",
-      "schedule": "0 */6 * * *"
+      "path": "/api/internal/jobs/reminders/maintenance",
+      "schedule": "0 0 * * *"
     }
   ],
   "routes": [

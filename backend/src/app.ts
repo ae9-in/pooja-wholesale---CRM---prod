@@ -86,6 +86,25 @@ export function createApp() {
     }
   });
 
+  app.get("/api/internal/jobs/reminders/maintenance", async (req, res, next) => {
+    if (!hasValidCronSecret(req)) {
+      return res.status(401).json({ ok: false, message: "Unauthorized cron request." });
+    }
+
+    try {
+      await updateReminderStatuses();
+      const repairedCount = await repairMissingRevisitReminders();
+      logger.info({ repairedCount }, "Reminder maintenance completed");
+      res.json({
+        ok: true,
+        job: "reminder-maintenance",
+        repairedCount,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   // API routes
   app.use("/api/v1/users", userRouter);
   app.use("/api/v1/customers", customerRouter);
