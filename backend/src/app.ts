@@ -3,8 +3,7 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import morgan from "morgan";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import type { Request } from "express";
 import { env } from "./config/env.js";
 import { errorHandler } from "./middleware/error.middleware.js";
 import { userRouter } from "./modules/users/users.routes.js";
@@ -13,9 +12,16 @@ import { deliveryRouter } from "./modules/deliveries/deliveries.routes.js";
 import { reminderRouter } from "./modules/reminders/reminders.routes.js";
 import { dashboardRouter } from "./modules/dashboard/dashboard.routes.js";
 import { reportsRouter } from "./modules/reports/reports.routes.js";
+import { logger } from "./lib/logger.js";
+import { repairMissingRevisitReminders, updateReminderStatuses } from "./modules/reminders/reminders.service.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+function hasValidCronSecret(req: Request) {
+  if (!env.CRON_SECRET) {
+    return true;
+  }
+
+  return req.get("authorization") === `Bearer ${env.CRON_SECRET}`;
+}
 
 export function createApp() {
   const app = express();
@@ -38,10 +44,46 @@ export function createApp() {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
   app.use(morgan("dev"));
-  app.use("/uploads", express.static(path.resolve(process.cwd(), env.UPLOAD_DIR)));
+  app.use("/uploads", express.static(env.UPLOAD_DIR));
+
+  app.get("/", (_req, res) => {
+    res.json({
+      ok: true,
+      service: "wholesale-backend",
+      message: "Separate backend deployment is active.",
+    });
+  });
 
   app.get("/health", (_req, res) => {
     res.json({ ok: true });
+  });
+
+  app.get("/api/internal/jobs/reminders/sync", async (req, res, next) => {
+    if (!hasValidCronSecret(req)) {
+      return res.status(401).json({ ok: false, message: "Unauthorized cron request." });
+    }
+
+    try {
+      await updateReminderStatuses();
+      logger.info("Reminder status sync completed");
+      res.json({ ok: true, job: "reminder-status-sync" });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/internal/jobs/reminders/repair", async (req, res, next) => {
+    if (!hasValidCronSecret(req)) {
+      return res.status(401).json({ ok: false, message: "Unauthorized cron request." });
+    }
+
+    try {
+      const repairedCount = await repairMissingRevisitReminders();
+      logger.info({ repairedCount }, "Reminder repair completed");
+      res.json({ ok: true, job: "reminder-repair", repairedCount });
+    } catch (error) {
+      next(error);
+    }
   });
 
   // API routes
@@ -51,20 +93,6 @@ export function createApp() {
   app.use("/api/v1/reminders", reminderRouter);
   app.use("/api/v1/dashboard", dashboardRouter);
   app.use("/api/v1/reports", reportsRouter);
-
-  // Serve frontend static files in production (not needed for Vercel)
-  if (env.NODE_ENV === "production" && process.env.VERCEL !== "1") {
-    const frontendPath = path.resolve(__dirname, "../../frontend/dist");
-    
-    app.use(express.static(frontendPath, {
-      maxAge: '1d',
-      etag: true,
-    }));
-    
-    app.get("*", (_req, res) => {
-      res.sendFile(path.join(frontendPath, "index.html"));
-    });
-  }
 
   app.use(errorHandler);
 

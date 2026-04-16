@@ -1,16 +1,8 @@
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../lib/prisma.js";
-import { env } from "../../config/env.js";
 import { AppError } from "../../utils/app-error.js";
 import { logActivity } from "../activity/activity.service.js";
-
-function signAccessToken(payload: Express.UserPayload) {
-  return jwt.sign(payload, env.JWT_ACCESS_SECRET, {
-    expiresIn: env.JWT_ACCESS_EXPIRES_IN as jwt.SignOptions["expiresIn"],
-  });
-}
 
 export const authService = {
   async login(email: string, password: string) {
@@ -40,12 +32,9 @@ export const authService = {
     });
 
     return {
-      token: signAccessToken(payload),
       user: {
-        id: user.id,
+        ...payload,
         fullName: user.fullName,
-        email: user.email,
-        role: user.role,
         phone: user.phone,
       },
     };

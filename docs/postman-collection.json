@@ -7,32 +7,6 @@
   },
   "item": [
     {
-      "name": "Auth Login",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/auth/login",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "auth",
-            "login"
-          ]
-        },
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"superadmin@wholesale.local\",\n  \"password\": \"Password123!\"\n}"
-        }
-      }
-    },
-    {
       "name": "Create Delivery",
       "request": {
         "method": "POST",
@@ -40,10 +14,6 @@
           {
             "key": "Content-Type",
             "value": "application/json"
-          },
-          {
-            "key": "Authorization",
-            "value": "Bearer {{token}}"
           }
         ],
         "url": {
@@ -66,10 +36,6 @@
     {
       "key": "baseUrl",
       "value": "http://localhost:5000/api/v1"
-    },
-    {
-      "key": "token",
-      "value": ""
     }
   ]
 }

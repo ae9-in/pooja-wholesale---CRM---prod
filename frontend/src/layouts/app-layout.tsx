@@ -46,9 +46,9 @@ export function AppLayout() {
               <h1 className="mt-1 text-2xl font-bold text-ink">Wholesale business management</h1>
             </div>
             <div className="rounded-2xl bg-white px-4 py-3 text-right shadow-panel">
-              <p className="text-xs text-slate-500">Logged in as</p>
+              <p className="text-xs text-slate-500">Operator mode</p>
               <p className="font-semibold">{user?.fullName ?? "Operator"}</p>
-              <p className="text-sm text-slate-500">{user?.role ?? "STAFF"}</p>
+              <p className="text-sm text-slate-500">{user?.role ?? "ADMIN"}</p>
             </div>
           </header>
           <Outlet />

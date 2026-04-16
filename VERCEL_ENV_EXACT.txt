@@ -2,46 +2,34 @@
 EXACT ENVIRONMENT VARIABLES FOR VERCEL
 ========================================
 
-Copy each line below EXACTLY as shown.
-Go to Vercel Dashboard → Your Project → Settings → Environment Variables
+Create TWO Vercel projects:
+1. Frontend project with Root Directory = frontend
+2. Backend project with Root Directory = backend
 
-For each variable:
-1. Click "Add New"
-2. Paste the KEY (left side of =)
-3. Paste the VALUE (right side of =)
-4. Select: Production, Preview, Development (all three)
-5. Click Save
+========================================
+FRONTEND PROJECT ENV
+========================================
 
+VITE_API_URL=https://your-backend-project.vercel.app
+
+========================================
+BACKEND PROJECT ENV
 ========================================
 
 NODE_ENV=production
-
 PORT=3000
-
-DATABASE_URL=mongodb+srv://jishnu:jishnu123@cluster07.uw7kga7.mongodb.net/wholesale_crm?retryWrites=true&w=majority&appName=Cluster07
-
-JWT_ACCESS_SECRET=super-secret-jwt-access-key-change-in-production-min-10-chars
-
-JWT_ACCESS_EXPIRES_IN=1d
-
-JWT_REFRESH_SECRET=super-secret-jwt-refresh-key-change-in-production-min-10-chars
-
-JWT_REFRESH_EXPIRES_IN=7d
-
-CORS_ORIGIN=*
-
+DATABASE_URL=mongodb+srv://YOUR_USERNAME:YOUR_PASSWORD@YOUR_CLUSTER.mongodb.net/wholesale_crm?retryWrites=true&w=majority&appName=YOUR_CLUSTER
+CORS_ORIGIN=https://your-frontend-project.vercel.app
 UPLOAD_DIR=uploads
-
 MAX_FILE_SIZE_MB=5
+DEFAULT_OPERATOR_EMAIL=admin@wholesale.local
+CRON_SECRET=replace-this-with-a-long-random-secret
 
 ========================================
-IMPORTANT NOTES:
+IMPORTANT NOTES
 ========================================
 
-1. JWT secrets MUST be at least 10 characters long
-2. Make sure MongoDB Atlas Network Access allows 0.0.0.0/0
-3. After adding ALL variables, go to Deployments tab
-4. Click three dots (...) on latest deployment
-5. Click "Redeploy"
-
-========================================
+1. JWT variables are no longer needed anywhere.
+2. MongoDB Atlas Network Access must allow the Vercel deployment to connect.
+3. The backend uses CRON_SECRET to protect the reminder cron endpoints.
+4. After saving env vars, redeploy both projects.
